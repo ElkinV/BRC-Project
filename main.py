@@ -45,7 +45,7 @@ async def camera_response():
 
         except requests.RequestException as e:
             yield f"event: Error\ndata: {str(e)}\n\n"
-            await sleep(5)  # Espera más tiempo si hay un error para evitar demasiadas solicitudes
+            await sleep(5)
 
 
 @app.get("/stream-data")
@@ -68,4 +68,4 @@ async def root():
     return {"message": "API de conteo de personas activa"}
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="192.168.1.5", port=8000)
+    uvicorn.run(app, host="192.168.1.106", port=8000)
