@@ -11,5 +11,5 @@ class IDBConnection(ABC):
         pass
 
     @abstractmethod
-    def executeQuery(self):
+    def executeQuery(self, query):
         pass

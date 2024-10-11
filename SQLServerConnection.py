@@ -1,6 +1,7 @@
 import pyodbc
 from IDBConnection import IDBConnection
 from cameras import Camera
+from typing import List, Optional
 
 
 class SQLServerConnection(IDBConnection):
@@ -13,8 +14,10 @@ class SQLServerConnection(IDBConnection):
         self.conexion = None
 
     def connect(self):
+        if not all([self.user, self.password, self.server, self.database]):
+            print("Los parámetros de conexión no están completos")
+            return
         try:
-            # Crear la conexión con el servidor SQL Server
             self.conexion = pyodbc.connect(
                 'DRIVER={ODBC Driver 17 for SQL Server};'
                 f'SERVER={self.server};'
@@ -34,22 +37,22 @@ class SQLServerConnection(IDBConnection):
     def executeQuery(self, query: str):
         try:
             if self.conexion:
-                cursor = self.conexion.cursor()
-                cursor.execute(query)
-                self.conexion.commit()
-                print(f"Consulta ejecutada: {query}")
+                with self.conexion.cursor() as cursor:
+                    cursor.execute(query)
+                    self.conexion.commit()
+                    print(f"Consulta ejecutada: {query}")
             else:
                 print("No hay conexión activa para ejecutar la consulta")
         except pyodbc.Error as e:
             print("Error al ejecutar la consulta:", e)
 
-    def checkConnection(self):
+    def checkConnection(self) -> bool:
         try:
             if self.conexion:
-                cursor = self.conexion.cursor()
-                cursor.execute("SELECT 1")
-                cursor.fetchone()
-                return True
+                with self.conexion.cursor() as cursor:
+                    cursor.execute("SELECT 1")
+                    cursor.fetchone()
+                    return True
             else:
                 print("No hay conexión activa")
                 return False
@@ -57,36 +60,24 @@ class SQLServerConnection(IDBConnection):
             print("Error al verificar la conexión:", e)
             return False
 
-    def getCameras(self):
+    def getCameras(self) -> Optional[List[Camera]]:
+        if not self.conexion:
+            print("No hay conexión activa para obtener cámaras")
+            return None
         try:
-            if self.conexion:
-                cursor = self.conexion.cursor()
-                # Consulta con los campos necesarios de la base de datos
+            with self.conexion.cursor() as cursor:
                 cursor.execute("""
-                    SELECT TOP 2 camara_id, ip, usuario, clave, in1, in2, out1, out2 
+                    SELECT top 1 camara_id, ip, usuario, clave, in1, in2, out1, out2
                     FROM API_camaras
-                """)  # Ajustar según la estructura de tu tabla
-
-                cameras = []
-
-                # Crear instancias de Camera con los datos obtenidos
-                for fila in cursor.fetchall():
-                    camera = Camera(
-                        id=fila[0],
-                        ip=fila[1],
-                        usuario=fila[2],
-                        clave=fila[3],
-                        regla_1=fila[4],
-                        in_1=fila[5],
-                        regla_2=fila[6],
-                        in_2=fila[7]
+                """)
+                cameras = [
+                    Camera(
+                        id=fila[0], ip=fila[1], usuario=fila[2], clave=fila[3],
+                        in1=fila[4], in2=fila[5], out1=fila[6], out2=fila[7]
                     )
-                    cameras.append(camera)
-
-                return cameras  # Retornar lista de objetos Camera
-            else:
-                print("No hay conexión activa para obtener cámaras")
-                return []
+                    for fila in cursor.fetchall()
+                ]
+                return cameras
         except pyodbc.Error as e:
             print("Error al obtener cámaras:", e)
-            return []
+            return None

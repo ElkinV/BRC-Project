@@ -1,14 +1,63 @@
 import ProxyDB
+from asyncio import sleep
+from fastapi.responses import StreamingResponse
+import requests
 
 
 class SSEClient:
-    def __init__(self, proxy: ProxyDB, buffer_size, cameras):
-        self.proxy = proxy
-        self.bufferSize = buffer_size
-        self.cameras = cameras
+    def __init__(self, proxy: ProxyDB, buffer_size: int):
+        self.proxy = proxy  # ProxyDB para gestionar las cámaras y la caché
+        self.bufferSize = buffer_size  # Tamaño del buffer (opcional, puede ser útil para limitar eventos)
+        self.is_streaming = False  # Para controlar si el streaming está activo o no
 
-    def openStream(self):
-        ...
+        # Crear una sesión para realizar peticiones HTTP con autenticación digest
+        self.session = requests.Session()
+        self.session.auth = requests.auth.HTTPDigestAuth(
+            "admin", "Aping.2024$"  # Ajusta esto según la configuración de autenticación
+        )
+        self.session.headers.update({'Accept': 'application/json'})
+
+    async def openStream(self):
+        """Método para abrir el stream de eventos y enviar actualizaciones para cada cámara."""
+        self.is_streaming = True
+
+        # Obtener la lista de cámaras desde la base de datos mediante el ProxyDB
+        db_cameras = self.proxy.getCameras()
+
+        while self.is_streaming:
+            for camera in db_cameras:
+                try:
+                    # Construir la URL específica para cada cámara usando su IP
+                    camera_url = f"http://{camera.ip}/opensdk/WiseAI/search/objectcounting/check?channel=0&index=1&includeAIData=Live"
+
+                    # Hacer la petición a la API de cada cámara
+                    response = self.session.get(camera_url)
+                    response.raise_for_status()  # Asegura que la petición fue exitosa
+
+                    # Obtener los datos de la respuesta JSON
+                    lines = response.json()['objectCountingLive'][0]['countingRules'][0]["lines"]
+                    self.proxy.executeQuery(camera.to_sql_insert())
+
+                    # Iterar sobre las líneas de conteo y enviarlas como eventos SSE
+                    for line in lines:
+                        # Enviar evento con los datos de conteo de personas por cámara
+                        yield f"event: PeopleCountingUpdate\ndata: Cámara: {camera.ip} - {line['directionBasedResult']}\n\n"
+                        await sleep(1)  # Pausar 1 segundo entre cada envío de datos
+
+                except requests.RequestException as e:
+                    # Si ocurre un error en la conexión, envía un evento de error y espera 5 segundos
+                    yield f"event: Error\ndata: Error en la cámara {camera.ip}: {str(e)}\n\n"
+                    await sleep(5)
+
+            # Consultar nuevamente la base de datos y comparar las cámaras con la caché
+            new_db_cameras = self.proxy.getCameras()
+
+            # Compara si las cámaras han cambiado usando el método __eq__ de la clase Camera
+            if new_db_cameras != db_cameras:
+                print("Las cámaras han cambiado, actualizando la lista.")
+                db_cameras = new_db_cameras  # Actualiza la lista de cámaras
 
     def closeStream(self):
-        ...
+        """Método para cerrar el stream."""
+        self.is_streaming = False
+        print("El stream ha sido cerrado.")
