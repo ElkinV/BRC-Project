@@ -1,19 +1,24 @@
-import ProxyDB
+import os
+from ProxyDB import ProxyDB
 from asyncio import sleep
-from fastapi.responses import StreamingResponse
 import requests
+import logging
 
+logger = logging.getLogger(__name__)
 
 class SSEClient:
     def __init__(self, proxy: ProxyDB, buffer_size: int):
-        self.proxy = proxy  # ProxyDB para gestionar las cámaras y la caché
-        self.bufferSize = buffer_size  # Tamaño del buffer (opcional, puede ser útil para limitar eventos)
-        self.is_streaming = False  # Para controlar si el streaming está activo o no
+        self.proxy = proxy
+        self.bufferSize = buffer_size
+        self.is_streaming = False
 
-        # Crear una sesión para realizar peticiones HTTP con autenticación digest
+        # Obtener credenciales desde variables de entorno
+        self.camera_user = os.getenv("CAMERA_USER", "admin")
+        self.camera_password = os.getenv("CAMERA_PASSWORD", "Aping.2024$")
+
         self.session = requests.Session()
         self.session.auth = requests.auth.HTTPDigestAuth(
-            "admin", "Aping.2024$"  # Ajusta esto según la configuración de autenticación
+            self.camera_user, self.camera_password
         )
         self.session.headers.update({'Accept': 'application/json'})
 
@@ -36,7 +41,12 @@ class SSEClient:
 
                     # Obtener los datos de la respuesta JSON
                     lines = response.json()['objectCountingLive'][0]['countingRules'][0]["lines"]
-                    self.proxy.executeQuery(camera.to_sql_insert())
+
+                    camera.in1 = lines[0]['directionBasedResult'][0]['count']
+                    camera.out1 = lines[1]['directionBasedResult'][0]['count']
+                    camera.in2 = lines[0]['directionBasedResult'][1]['count']
+                    camera.out2 = lines[1]['directionBasedResult'][1]['count']
+                    # self.proxy.executeQuery(camera.to_sql_insert())
 
                     # Iterar sobre las líneas de conteo y enviarlas como eventos SSE
                     for line in lines:
@@ -46,18 +56,22 @@ class SSEClient:
 
                 except requests.RequestException as e:
                     # Si ocurre un error en la conexión, envía un evento de error y espera 5 segundos
+                    logger.error(f"Error en la cámara {camera.ip}: {str(e)}")
                     yield f"event: Error\ndata: Error en la cámara {camera.ip}: {str(e)}\n\n"
                     await sleep(5)
 
             # Consultar nuevamente la base de datos y comparar las cámaras con la caché
             new_db_cameras = self.proxy.getCameras()
 
-            # Compara si las cámaras han cambiado usando el método __eq__ de la clase Camera
-            if new_db_cameras != db_cameras:
-                print("Las cámaras han cambiado, actualizando la lista.")
+
+            if new_db_cameras[0] != db_cameras[0]:
+                logger.info("Las cámaras han cambiado, actualizando la lista.")
                 db_cameras = new_db_cameras  # Actualiza la lista de cámaras
+
+            if camera in new_db_cameras:
+                print(camera, db_cameras)
 
     def closeStream(self):
         """Método para cerrar el stream."""
         self.is_streaming = False
-        print("El stream ha sido cerrado.")
+        logger.info("El stream ha sido cerrado.")

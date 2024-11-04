@@ -2,7 +2,9 @@ import pyodbc
 from IDBConnection import IDBConnection
 from cameras import Camera
 from typing import List, Optional
+import logging
 
+logger = logging.getLogger(__name__)
 
 class SQLServerConnection(IDBConnection):
     def __init__(self, user: str, password: str, port: str, server: str, database: str):
@@ -15,7 +17,7 @@ class SQLServerConnection(IDBConnection):
 
     def connect(self):
         if not all([self.user, self.password, self.server, self.database]):
-            print("Los parámetros de conexión no están completos")
+            logger.error("Los parámetros de conexión no están completos")
             return
         try:
             self.conexion = pyodbc.connect(
@@ -25,14 +27,14 @@ class SQLServerConnection(IDBConnection):
                 f'UID={self.user};'
                 f'PWD={self.password}'
             )
-            print("Conexión exitosa a la base de datos")
+            logger.info("Conexión exitosa a la base de datos")
         except pyodbc.Error as e:
-            print("Error al conectarse a la base de datos:", e)
+            logger.error(f"Error al conectarse a la base de datos: {e}")
 
     def disconnect(self):
         if self.conexion:
             self.conexion.close()
-            print("Conexión cerrada")
+            logger.info("Conexión cerrada")
 
     def executeQuery(self, query: str):
         try:
@@ -40,11 +42,11 @@ class SQLServerConnection(IDBConnection):
                 with self.conexion.cursor() as cursor:
                     cursor.execute(query)
                     self.conexion.commit()
-                    print(f"Consulta ejecutada: {query}")
+                    logger.info(f"Consulta ejecutada: {query}")
             else:
-                print("No hay conexión activa para ejecutar la consulta")
+                logger.warning("No hay conexión activa para ejecutar la consulta")
         except pyodbc.Error as e:
-            print("Error al ejecutar la consulta:", e)
+            logger.error(f"Error al ejecutar la consulta: {e}")
 
     def checkConnection(self) -> bool:
         try:
@@ -54,15 +56,15 @@ class SQLServerConnection(IDBConnection):
                     cursor.fetchone()
                     return True
             else:
-                print("No hay conexión activa")
+                logger.warning("No hay conexión activa")
                 return False
         except pyodbc.Error as e:
-            print("Error al verificar la conexión:", e)
+            logger.error(f"Error al verificar la conexión: {e}")
             return False
 
     def getCameras(self) -> Optional[List[Camera]]:
         if not self.conexion:
-            print("No hay conexión activa para obtener cámaras")
+            logger.warning("No hay conexión activa para obtener cámaras")
             return None
         try:
             with self.conexion.cursor() as cursor:
@@ -79,5 +81,5 @@ class SQLServerConnection(IDBConnection):
                 ]
                 return cameras
         except pyodbc.Error as e:
-            print("Error al obtener cámaras:", e)
+            logger.error(f"Error al obtener cámaras: {e}")
             return None
