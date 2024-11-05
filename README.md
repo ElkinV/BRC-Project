@@ -27,7 +27,7 @@ The API communicates with the people counting cameras through periodic requests,
 
 ### System Design Diagram
 
-![System Design](System%20Design.png)
+![System Design](Diseño%20del%20Sistema.png)
 
 The design includes the following key components:
 
@@ -43,7 +43,7 @@ The domain model describes the core functionality of the system in terms of the 
 
 ### Domain Model Diagram
 
-![Domain Model](Domain%20Model.png)
+![Domain Model](Modelo%20de%20Dominio.png)
 
 This diagram illustrates how the various components interact within the system domain:
 
@@ -65,7 +65,7 @@ Although the API focuses on data transmission, it interacts with an SQL database
 
 The diagram shows the relationship between the system's various components. The API acts as an intermediary between the cameras and the database, ensuring that transmitted data is synchronized with the database.
 
-![Components Diagram](Components_Diagram.png)
+![Components Diagram](Diagrama_de_Componentes.png)
 
 ## Setup and Installation
 
