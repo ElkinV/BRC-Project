@@ -98,7 +98,7 @@ The diagram shows the relationship between the system's various components. The 
 
    ```env
    DATABASE_URL=mssql+pyodbc://username:password@server/database
-   DB_SERVER=your_serve
+   DB_SERVER= your_server
    DB_PASSWORD = your_password
    DB_USER = your_user
    ```
