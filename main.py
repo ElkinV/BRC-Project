@@ -23,10 +23,10 @@ app.add_middleware(
 )
 
 # Obtener configuración de la base de datos desde variables de entorno
-DB_USER = os.getenv("DB_USER", "sa")
-DB_PASSWORD = os.getenv("DB_PASSWORD", "10260411")
-DB_SERVER = os.getenv("DB_SERVER", "ELKIN-D\SQLEXPRESS")
-DB_NAME = os.getenv("DB_NAME", "PeopleCounting")
+DB_USER ="sa"
+DB_PASSWORD ="Vul98160"
+DB_SERVER = "WIN-1T2UPMKMA65\SQLEXPRESS"
+DB_NAME =  "PeopleCounting"
 
 # Inicializar la conexión a la base de datos y el ProxyDB
 real_connection = SQLServerConnection(user=DB_USER, password=DB_PASSWORD, port="", server=DB_SERVER, database=DB_NAME)

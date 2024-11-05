@@ -12,15 +12,7 @@ class SSEClient:
         self.bufferSize = buffer_size
         self.is_streaming = False
 
-        # Obtener credenciales desde variables de entorno
-        self.camera_user = os.getenv("CAMERA_USER", "admin")
-        self.camera_password = os.getenv("CAMERA_PASSWORD", "Aping.2024$")
 
-        self.session = requests.Session()
-        self.session.auth = requests.auth.HTTPDigestAuth(
-            self.camera_user, self.camera_password
-        )
-        self.session.headers.update({'Accept': 'application/json'})
 
     async def openStream(self):
         """Método para abrir el stream de eventos y enviar actualizaciones para cada cámara."""
@@ -35,16 +27,25 @@ class SSEClient:
                     # Construir la URL específica para cada cámara usando su IP
                     camera_url = f"http://{camera.ip}/opensdk/WiseAI/search/objectcounting/check?channel=0&index=1&includeAIData=Live"
 
-                    # Hacer la petición a la API de cada cámara
-                    response = self.session.get(camera_url)
+                    #Obtener usuario y clave de la camara en especifico
+
+                    camera_user = camera.usuario
+                    camera_password = camera.clave
+
+                    session = requests.Session()
+                    session.auth = requests.auth.HTTPDigestAuth(
+                        camera_user, camera_password
+                    )
+                    session.headers.update({'Accept': 'application/json'})
+                    response = session.get(camera_url)
                     response.raise_for_status()  # Asegura que la petición fue exitosa
 
                     # Obtener los datos de la respuesta JSON
                     lines = response.json()['objectCountingLive'][0]['countingRules'][0]["lines"]
 
                     camera.in1 = lines[0]['directionBasedResult'][0]['count']
-                    camera.out1 = lines[1]['directionBasedResult'][0]['count']
-                    camera.in2 = lines[0]['directionBasedResult'][1]['count']
+                    camera.out1 = lines[0]['directionBasedResult'][1]['count']
+                    camera.in2 = lines[1]['directionBasedResult'][0]['count']
                     camera.out2 = lines[1]['directionBasedResult'][1]['count']
                     # self.proxy.executeQuery(camera.to_sql_insert())
 
@@ -54,6 +55,9 @@ class SSEClient:
                         yield f"event: PeopleCountingUpdate\ndata: Cámara: {camera.ip} - {line['directionBasedResult']}\n\n"
                         await sleep(1)  # Pausar 1 segundo entre cada envío de datos
 
+
+                    #insertar datos de camara en SQLserver
+                    self.proxy.executeQuery(camera.to_sql_insert())
                 except requests.RequestException as e:
                     # Si ocurre un error en la conexión, envía un evento de error y espera 5 segundos
                     logger.error(f"Error en la cámara {camera.ip}: {str(e)}")

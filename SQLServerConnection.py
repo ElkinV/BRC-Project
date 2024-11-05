@@ -69,7 +69,7 @@ class SQLServerConnection(IDBConnection):
         try:
             with self.conexion.cursor() as cursor:
                 cursor.execute("""
-                    SELECT top 1 camara_id, ip, usuario, clave, in1, in2, out1, out2
+                    SELECT  camara_id, ip, usuario, clave, in1, in2, out1, out2
                     FROM API_camaras
                 """)
                 cameras = [
