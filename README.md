@@ -1,105 +1,103 @@
-# Proyecto de Conteo de Personas - API de Transmisión en Tiempo Real
+# People Counting Project - Real-Time Transmission API
 
-Este proyecto implementa una API diseñada para la transmisión en tiempo real de datos de conteo de personas desde cámaras especializadas. La API, basada en **FastAPI** y **Server-Sent Events (SSE)**, facilita la actualización continua de datos entre cámaras de conteo de personas Hanwha y un sistema de base de datos, lo que permite a los usuarios recibir notificaciones en tiempo real de entradas y salidas de personas en distintas ubicaciones.
+This project implements an API designed for real-time transmission of people counting data from specialized cameras. The API, built with **FastAPI** and **Server-Sent Events (SSE)**, facilitates continuous data updates from Hanwha people counting cameras to a database system, allowing users to receive real-time notifications of people entering and exiting various locations.
 
-## Enfoque de Diseño
+## Design Approach
 
-El sistema fue desarrollado utilizando **FastAPI** para crear una API robusta y eficiente, y está diseñado con patrones de software que facilitan la escalabilidad y mantenimiento:
+The system was developed using **FastAPI** to create a robust and efficient API, and it is designed with software patterns that facilitate scalability and maintenance:
 
-- **Patrón Proxy**: Utilizado en la clase `ProxyDB`, que actúa como intermediario para la gestión de conexiones y consultas a la base de datos. Esto permite un control más preciso sobre la interacción con la base de datos, aplicando lógica adicional antes de ejecutar consultas o recuperar datos.
-  
-- **Patrón GRASP - Polimorfismo**: Empleado a través de la interfaz `IDBConnection`, que define métodos genéricos para conectar, desconectar y ejecutar consultas en la base de datos. Las implementaciones específicas, como `ProxyDB` y `SQLServerConnection`, permiten utilizar diferentes mecanismos de conexión sin cambiar la lógica principal de la API, facilitando la extensibilidad del sistema.
+- **Proxy Pattern**: Used in the `ProxyDB` class, which acts as an intermediary for managing connections and queries to the database. This allows for more precise control over database interactions, applying additional logic before executing queries or retrieving data.
 
-## Compatibilidad con Cámaras Hanwha
+## Compatibility with Hanwha Cameras
 
-Este proyecto está diseñado específicamente para operar con cámaras **Hanwha** que tengan el módulo **People Counting** habilitado. Estas cámaras cuentan con capacidades avanzadas para detectar y contar personas en entradas y salidas de distintos espacios, lo que permite a la API obtener datos precisos y en tiempo real.
+This project is specifically designed to operate with **Hanwha** cameras that have the **People Counting** module enabled. These cameras feature advanced capabilities for detecting and counting people entering and exiting various spaces, allowing the API to capture accurate, real-time data.
 
-La integración con cámaras Hanwha permite a la API aprovechar los datos de conteo proporcionados por el módulo, manteniendo una comunicación continua y automatizada con el sistema de base de datos para actualizaciones y sincronización.
+The integration with Hanwha cameras enables the API to leverage counting data provided by the module, maintaining continuous and automated communication with the database system for updates and synchronization.
 
-## Descripción General de la API
+## API Overview
 
-La API se comunica con las cámaras de conteo de personas a través de solicitudes periódicas, recuperando datos de conteo de entradas y salidas, y los actualiza en el sistema en tiempo real mediante eventos SSE. Esta arquitectura permite una comunicación de tipo "push" del servidor hacia el cliente, ideal para flujos de datos en tiempo real en aplicaciones de monitoreo de espacios físicos.
+The API communicates with the people counting cameras through periodic requests, retrieving entry and exit counting data and updating it in real time via SSE. This architecture allows "push" communication from the server to the client, ideal for real-time data flows in physical space monitoring applications.
 
-### Tecnologías y Protocolos Utilizados
+### Technologies and Protocols Used
 
-- **FastAPI**: Framework para construir APIs rápidas y robustas en Python.
-- **Server-Sent Events (SSE)**: Tecnología para transmitir datos del servidor al cliente en tiempo real, usando una conexión HTTP persistente.
-- **Uvicorn**: Servidor ASGI para el despliegue de aplicaciones FastAPI, optimizado para rendimiento en tiempo real.
-- **Starlette**: Infraestructura ASGI para manejar eventos en FastAPI.
+- **FastAPI**: Framework for building fast and robust APIs in Python.
+- **Server-Sent Events (SSE)**: Technology for transmitting data from the server to the client in real time, using a persistent HTTP connection.
+- **Uvicorn**: ASGI server for deploying FastAPI applications, optimized for real-time performance.
+- **Starlette**: ASGI infrastructure to handle events in FastAPI.
 
-### Diagrama de Diseño del Sistema
+### System Design Diagram
 
-![Diseño del Sistema](Diseño%20del%20Sistema.png)
+![System Design](System%20Design.png)
 
-El diseño incluye los siguientes elementos clave:
+The design includes the following key components:
 
-1. **Interface IDBConnection**: Define los métodos necesarios para la conexión y ejecución de consultas en la base de datos, lo que permite una arquitectura modular y flexible.
-2. **ProxyDB**: Actúa como un intermediario, gestionando las conexiones y consultas de forma segura y eficiente.
-3. **SQLServerConnection**: Proporciona la implementación específica para conectar con SQL Server, incluyendo los datos de autenticación.
-4. **SSEClient**: Responsable de gestionar el flujo de eventos SSE, manteniendo una lista de cámaras y administrando el buffer de transmisión.
-5. **Camera**: Modelo de datos que representa las cámaras Hanwha, con atributos para almacenar los valores de conteo de personas según las reglas configuradas.
+1. **IDBConnection Interface**: Defines the necessary methods for database connection and query execution, enabling a modular and flexible architecture.
+2. **ProxyDB**: Acts as an intermediary, securely and efficiently managing connections and queries.
+3. **SQLServerConnection**: Provides the specific implementation for connecting to SQL Server, including authentication details.
+4. **SSEClient**: Responsible for managing the SSE event stream, maintaining a list of cameras, and managing the transmission buffer.
+5. **Camera**: Data model representing Hanwha cameras, with attributes for storing people counting values according to configured rules.
 
-## Modelo de Dominio
+## Domain Model
 
-El modelo de dominio describe la funcionalidad principal del sistema en términos de los objetos y sus relaciones en el contexto de la aplicación. La API actúa como el componente central, conectando las cámaras, la base de datos y el sistema de monitoreo.
+The domain model describes the core functionality of the system in terms of the objects and their relationships within the application’s context. The API acts as the central component, connecting the cameras, database, and monitoring system.
 
-### Diagrama del Modelo de Dominio
+### Domain Model Diagram
 
-![Modelo de Dominio](Modelo%20de%20Dominio.png)
+![Domain Model](Domain%20Model.png)
 
-Este diagrama ilustra cómo interactúan los diferentes componentes dentro del dominio del sistema:
+This diagram illustrates how the various components interact within the system domain:
 
-1. **Cámaras Hanwha**: Ubicadas en distintas sedes, las cámaras capturan los datos de conteo de personas.
-2. **API-SSE**: Recibe peticiones a través de la SunAPI, actualiza la base de datos y transmite datos en tiempo real a los sistemas conectados.
-3. **Base de Datos SQL Server**: Almacena los datos históricos de conteo, permitiendo una actualización continua.
-4. **Dashboard**: Interfaz donde el Administrador del Sistema consulta los datos en tiempo real, integrándose con Power Automate para automatizar reportes.
+1. **Hanwha Cameras**: Located at different sites, these cameras capture people counting data.
+2. **API-SSE**: Receives requests through the SunAPI, updates the database, and transmits real-time data to connected systems.
+3. **SQL Server Database**: Stores historical counting data, allowing continuous updates.
+4. **Dashboard**: Interface where the System Administrator consults real-time data, integrating with Power Automate to automate reports.
 
-El sistema está diseñado para ofrecer una transmisión de datos eficiente y un acceso confiable a los registros en tiempo real, facilitando la administración y el monitoreo de los flujos de personas en cada ubicación.
+The system is designed to offer efficient data transmission and reliable access to real-time records, facilitating administration and monitoring of people flows at each location.
 
-### Interacción con la Base de Datos
+### Database Interaction
 
-Aunque la API se centra en la transmisión de datos, interactúa con una base de datos SQL que almacena datos de entrada y salida de personas para cada cámara. Esta información se utiliza para comparar datos en tiempo real y, si se detectan discrepancias, se actualizan los registros para reflejar los nuevos valores de conteo.
+Although the API focuses on data transmission, it interacts with an SQL database that stores entry and exit data for each camera. This information is used to compare real-time data, and if discrepancies are detected, the records are updated to reflect the new counting values.
 
-- **Vista `API_camaras`**: La API consulta esta vista para obtener el estado de las cámaras activas, incluyendo su IP y datos de autenticación.
-- **Tabla de Registros**: Los conteos de personas se almacenan en esta tabla, permitiendo un historial detallado de entradas y salidas por cámara.
+- **API_camaras View**: The API queries this view to obtain the status of active cameras, including their IP and authentication details.
+- **Records Table**: Stores people counting data, allowing a detailed history of entries and exits per camera.
 
-## Diagrama de Componentes
+## Components Diagram
 
-El diagrama muestra la relación entre los distintos componentes del sistema. La API actúa como intermediario entre las cámaras y la base de datos, asegurando que los datos transmitidos se reflejen en la base de datos de manera sincronizada.
+The diagram shows the relationship between the system's various components. The API acts as an intermediary between the cameras and the database, ensuring that transmitted data is synchronized with the database.
 
-![Diagrama de Componentes](Diagrama_de_Componentes.png)
+![Components Diagram](Components_Diagram.png)
 
-## Configuración e Instalación
+## Setup and Installation
 
-### Requisitos Previos
+### Prerequisites
 
-- Python 3.8 o superior
-- SQL Server o un entorno de base de datos compatible para almacenar los datos de conteo
+- Python 3.8 or higher
+- SQL Server or a compatible database environment to store counting data
 
-### Instrucciones de Instalación
+### Installation Instructions
 
-1. **Clonar el Repositorio**:
+1. **Clone the Repository**:
    ```bash
-   git clone https://github.com/usuario/proyecto-conteo-personas.git
-   cd proyecto-conteo-personas
+   git clone https://github.com/user/people-counting-project.git
+   cd people-counting-project
    ```
 
-2. **Configurar el Entorno Virtual**:
+2. **Set Up the Virtual Environment**:
    ```bash
    python -m venv .venv
-   source .venv/bin/activate  # En Linux o MacOS
-   .venv\Scripts\activate     # En Windows
+   source .venv/bin/activate  # On Linux or macOS
+   .venv\Scripts\activate     # On Windows
    ```
 
-3. **Instalar las Dependencias**:
+3. **Install Dependencies**:
    ```bash
    pip install -r requirements.txt
    ```
 
-4. **Configurar la Base de Datos** (Opcional): Si deseas utilizar la base de datos, ejecuta el archivo SQL `PeopleCounting.sql` en SQL Server para crear la estructura necesaria.
+4. **Configure the Database** (Optional): If you wish to use the database, run the `PeopleCounting.sql` file on SQL Server to create the required structure.
 
-5. **Iniciar la API**:
+5. **Start the API**:
    ```bash
    uvicorn main:app --reload
    ```
-   Esto ejecutará la API en `http://127.0.0.1:8000`.
+   This will run the API at `http://127.0.0.1:8000`.
