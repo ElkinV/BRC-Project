@@ -1,5 +1,6 @@
 import os
-from fastapi import FastAPI, Depends
+from dotenv import load_dotenv
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from SQLServerConnection import SQLServerConnection
 from starlette.responses import StreamingResponse
@@ -7,7 +8,7 @@ from ProxyDB import ProxyDB  # Asegúrate de que ProxyDB esté en el mismo direc
 from SSEClient import SSEClient  # Asegúrate de que SSEClient esté en el mismo directorio o ajusta la importación
 import logging
 
-# Configurar logging
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -23,13 +24,14 @@ app.add_middleware(
 )
 
 # Obtener configuración de la base de datos desde variables de entorno
-DB_USER ="sa"
-DB_PASSWORD ="Vul98160"
-DB_SERVER = "WIN-1T2UPMKMA65\SQLEXPRESS"
-DB_NAME =  "PeopleCounting"
+load_dotenv()
+db_user = os.getenv("DB_USER")
+db_password =os.getenv("DB_PASSWORD")
+db_server =os.getenv("DB_SERVER")
+db_name = os.getenv("DB_NAME")
 
 # Inicializar la conexión a la base de datos y el ProxyDB
-real_connection = SQLServerConnection(user=DB_USER, password=DB_PASSWORD, port="", server=DB_SERVER, database=DB_NAME)
+real_connection = SQLServerConnection(user=db_user, password=db_password, port="", server=db_server, database=db_name)
 proxy_db = ProxyDB(real_connection=real_connection, isConnected=False)
 
 # Crear el cliente SSE
@@ -37,7 +39,6 @@ sse_client = SSEClient(proxy=proxy_db, buffer_size=10)
 
 @app.on_event("startup")
 async def startup_event():
-    """Conectar a la base de datos al iniciar la aplicación."""
     proxy_db.connect()
     logger.info("Aplicación iniciada y conectada a la base de datos")
 

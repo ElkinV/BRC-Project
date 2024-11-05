@@ -4,6 +4,8 @@ from asyncio import sleep
 import requests
 import logging
 
+from cameras import Camera
+
 logger = logging.getLogger(__name__)
 
 class SSEClient:
@@ -15,11 +17,11 @@ class SSEClient:
 
 
     async def openStream(self):
-        """Método para abrir el stream de eventos y enviar actualizaciones para cada cámara."""
         self.is_streaming = True
 
         # Obtener la lista de cámaras desde la base de datos mediante el ProxyDB
         db_cameras = self.proxy.getCameras()
+        self.proxy.cache= db_cameras
 
         while self.is_streaming:
             for camera in db_cameras:
@@ -28,7 +30,6 @@ class SSEClient:
                     camera_url = f"http://{camera.ip}/opensdk/WiseAI/search/objectcounting/check?channel=0&index=1&includeAIData=Live"
 
                     #Obtener usuario y clave de la camara en especifico
-
                     camera_user = camera.usuario
                     camera_password = camera.clave
 
@@ -43,10 +44,12 @@ class SSEClient:
                     # Obtener los datos de la respuesta JSON
                     lines = response.json()['objectCountingLive'][0]['countingRules'][0]["lines"]
 
-                    camera.in1 = lines[0]['directionBasedResult'][0]['count']
-                    camera.out1 = lines[0]['directionBasedResult'][1]['count']
-                    camera.in2 = lines[1]['directionBasedResult'][0]['count']
-                    camera.out2 = lines[1]['directionBasedResult'][1]['count']
+                    cameraAPI = Camera()
+
+                    cameraAPI.in1 = lines[0]['directionBasedResult'][0]['count']
+                    cameraAPI.out1 = lines[0]['directionBasedResult'][1]['count']
+                    cameraAPI.in2 = lines[1]['directionBasedResult'][0]['count']
+                    cameraAPI.out2 = lines[1]['directionBasedResult'][1]['count']
                     # self.proxy.executeQuery(camera.to_sql_insert())
 
                     # Iterar sobre las líneas de conteo y enviarlas como eventos SSE
@@ -57,25 +60,18 @@ class SSEClient:
 
 
                     #insertar datos de camara en SQLserver
-                    self.proxy.executeQuery(camera.to_sql_insert())
+                    if camera != cameraAPI:
+                        self.proxy.executeQuery(camera.to_sql_insert())
+                    else:
+                        continue
                 except requests.RequestException as e:
                     # Si ocurre un error en la conexión, envía un evento de error y espera 5 segundos
                     logger.error(f"Error en la cámara {camera.ip}: {str(e)}")
                     yield f"event: Error\ndata: Error en la cámara {camera.ip}: {str(e)}\n\n"
                     await sleep(5)
 
-            # Consultar nuevamente la base de datos y comparar las cámaras con la caché
-            new_db_cameras = self.proxy.getCameras()
 
-
-            if new_db_cameras[0] != db_cameras[0]:
-                logger.info("Las cámaras han cambiado, actualizando la lista.")
-                db_cameras = new_db_cameras  # Actualiza la lista de cámaras
-
-            if camera in new_db_cameras:
-                print(camera, db_cameras)
-
-    def closeStream(self):
+    def APIcloseStream(self):
         """Método para cerrar el stream."""
         self.is_streaming = False
         logger.info("El stream ha sido cerrado.")

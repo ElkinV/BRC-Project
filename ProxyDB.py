@@ -30,63 +30,13 @@ class ProxyDB(IDBConnection):
         self.real_connection.executeQuery(query)
 
     def getCameras(self):
-        query = "SELECT camara_id, ip FROM API_camaras"
 
-        if query in self.cache:
-            logger.info("Comparando cámaras con la caché existente")
+        cameras_from_db = self.real_connection.getCameras()
 
-            cameras_from_db = self.real_connection.getCameras()
-            cameras_in_cache = self.cache[query]
-
-            if len(cameras_from_db) != len(cameras_in_cache):
-                logger.info("El número de cámaras ha cambiado, actualizando la caché")
-                self.cache[query] = cameras_from_db
-            else:
-                for camera_db, camera_cache in zip(cameras_from_db, cameras_in_cache):
-                    if camera_db != camera_cache:
-                        logger.info(f"La cámara con IP {camera_db.ip} ha cambiado, actualizando la caché")
-                        self.cache[query] = cameras_from_db
-                        break
-                else:
-                    logger.info("Las cámaras no han cambiado, devolviendo desde la caché")
-                    return cameras_in_cache
-        else:
-            logger.info("Obteniendo cámaras desde la base de datos real")
-            cameras_from_db = self.real_connection.getCameras()
-            self.cache[query] = cameras_from_db
-
-        return self.cache[query]
+        return cameras_from_db
 
     def clearCache(self):
         """Método para limpiar la caché."""
         self.cache.clear()
         logger.info("Caché limpiada")
-
-    def getCamerasByIP(self, camera_ip: str):
-        query = f'SELECT camara_id, ip FROM API_camaras WHERE camara_id="{camera_ip}"'
-
-        if query in self.cache:
-            logger.info("Comparando cámaras con la caché existente")
-
-            cameras_from_db = self.real_connection.getCameras()
-            cameras_in_cache = self.cache[query]
-
-            if len(cameras_from_db) != len(cameras_in_cache):
-                logger.info("El número de cámaras ha cambiado, actualizando la caché")
-                self.cache[query] = cameras_from_db
-            else:
-                for camera_db, camera_cache in zip(cameras_from_db, cameras_in_cache):
-                    if camera_db != camera_cache:
-                        logger.info(f"La cámara con IP {camera_db.ip} ha cambiado, actualizando la caché")
-                        self.cache[query] = cameras_from_db
-                        break
-                else:
-                    logger.info("Las cámaras no han cambiado, devolviendo desde la caché")
-                    return cameras_in_cache
-        else:
-            logger.info("Obteniendo cámaras desde la base de datos real")
-            cameras_from_db = self.real_connection.getCameras()
-            self.cache[query] = cameras_from_db
-
-        return self.cache[query]
 

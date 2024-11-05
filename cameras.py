@@ -1,5 +1,5 @@
 class Camera:
-    def __init__(self, id, ip, usuario, clave, in1, out1, in2, out2):
+    def __init__(self, id=None,ip=None, usuario=None, clave=None, in1=0, out1=0, in2=0, out2=0):
         self.id = id
         self.ip = ip
         self.usuario = usuario
@@ -14,7 +14,7 @@ class Camera:
 
     def __eq__(self, other):
         if isinstance(other, self.__class__):
-            return self.id == other.id and self.ip == other.ip
+            return self.in1 == other.in1 and self.in2 == other.in2 and self.out1 == other.out1 and self.out2 == other.out2
 
     def to_sql_insert(self):
         return f'INSERT into registros (camara_id, in1, out1, in2, out2) VALUES (\'{self.id}\', \'{self.in1}\', \'{self.out1}\', \'{self.in2}\', \'{self.out2}\')'
