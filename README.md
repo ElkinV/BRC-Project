@@ -93,8 +93,20 @@ The diagram shows the relationship between the system's various components. The 
    ```bash
    pip install -r requirements.txt
    ```
+   
+4. **Configure the `.env` File**: Create a `.env` file in the project root and add the necessary environment variables for database connections and camera authentication. Here is an example configuration:
 
-4. **Configure the Database** (Optional): If you wish to use the database, run the `PeopleCounting.sql` file on SQL Server to create the required structure.
+   ```env
+   DATABASE_URL=mssql+pyodbc://username:password@server/database
+   DB_SERVER=your_serve
+   DB_PASSWORD = your_password
+   DB_USER = your_user
+   ```
+
+   - `DATABASE_URL`: The connection string for SQL Server, including the username, password, server, and database name.
+   - `CAMERA_USER`: The default username for authenticating with Hanwha cameras.
+   - `CAMERA_PASSWORD`: The default password for authenticating with Hanwha cameras.
+
 
 5. **Start the API**:
    ```bash
