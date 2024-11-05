@@ -2,8 +2,17 @@
 
 Este proyecto implementa una API diseñada para la transmisión en tiempo real de datos de conteo de personas desde cámaras especializadas. La API, basada en **FastAPI** y **Server-Sent Events (SSE)**, facilita la actualización continua de datos entre cámaras de conteo de personas Hanwha y un sistema de base de datos, lo que permite a los usuarios recibir notificaciones en tiempo real de entradas y salidas de personas en distintas ubicaciones.
 
+## Enfoque de Diseño
+
+El sistema fue desarrollado utilizando **FastAPI** para crear una API robusta y eficiente, y está diseñado con patrones de software que facilitan la escalabilidad y mantenimiento:
+
+- **Patrón Proxy**: Utilizado en la clase `ProxyDB`, que actúa como intermediario para la gestión de conexiones y consultas a la base de datos. Esto permite un control más preciso sobre la interacción con la base de datos, aplicando lógica adicional antes de ejecutar consultas o recuperar datos.
+  
+- **Patrón GRASP - Polimorfismo**: Empleado a través de la interfaz `IDBConnection`, que define métodos genéricos para conectar, desconectar y ejecutar consultas en la base de datos. Las implementaciones específicas, como `ProxyDB` y `SQLServerConnection`, permiten utilizar diferentes mecanismos de conexión sin cambiar la lógica principal de la API, facilitando la extensibilidad del sistema.
+
 ## Compatibilidad con Cámaras Hanwha
-Este proyecto está diseñado específicamente para operar con cámaras Hanwha que tengan el módulo People Counting habilitado. Estas cámaras cuentan con capacidades avanzadas para detectar y contar personas en entradas y salidas de distintos espacios, lo que permite a la API obtener datos precisos y en tiempo real.
+
+Este proyecto está diseñado específicamente para operar con cámaras **Hanwha** que tengan el módulo **People Counting** habilitado. Estas cámaras cuentan con capacidades avanzadas para detectar y contar personas en entradas y salidas de distintos espacios, lo que permite a la API obtener datos precisos y en tiempo real.
 
 La integración con cámaras Hanwha permite a la API aprovechar los datos de conteo proporcionados por el módulo, manteniendo una comunicación continua y automatizada con el sistema de base de datos para actualizaciones y sincronización.
 
@@ -59,8 +68,6 @@ Aunque la API se centra en la transmisión de datos, interactúa con una base de
 El diagrama muestra la relación entre los distintos componentes del sistema. La API actúa como intermediario entre las cámaras y la base de datos, asegurando que los datos transmitidos se reflejen en la base de datos de manera sincronizada.
 
 ![Diagrama de Componentes](Diagrama_de_Componentes.png)
-
-
 
 ## Configuración e Instalación
 
