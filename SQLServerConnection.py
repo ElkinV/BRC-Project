@@ -1,4 +1,6 @@
 import pyodbc
+import os
+from dotenv import load_dotenv
 from IDBConnection import IDBConnection
 from cameras import Camera
 from typing import List, Optional
@@ -70,7 +72,7 @@ class SQLServerConnection(IDBConnection):
             with self.conexion.cursor() as cursor:
                 cursor.execute("""
                     SELECT   camara_id, ip, usuario, clave, in1, in2, out1, out2
-                    FROM API_camaras
+                    FROM API_camaras        
                 """)
                 cameras = [
                     Camera(

@@ -45,7 +45,7 @@ class SSEClient:
                     lines = response.json()['objectCountingLive'][0]['countingRules'][0]["lines"]
 
                     cameraAPI = Camera()
-
+                    cameraAPI.id = camera.id
                     cameraAPI.in1 = lines[0]['directionBasedResult'][0]['count']
                     cameraAPI.out1 = lines[0]['directionBasedResult'][1]['count']
                     cameraAPI.in2 = lines[1]['directionBasedResult'][0]['count']
@@ -61,8 +61,10 @@ class SSEClient:
 
                     #insertar datos de camara en SQLserver
                     if camera != cameraAPI:
-                        self.proxy.executeQuery(camera.to_sql_insert())
+                        self.proxy.executeQuery(cameraAPI.to_sql_insert())
+                        db_cameras = self.proxy.getCameras()
                     else:
+                        db_cameras = self.proxy.getCameras()
                         continue
                 except requests.RequestException as e:
                     # Si ocurre un error en la conexión, envía un evento de error y espera 5 segundos
